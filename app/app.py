@@ -1,47 +1,48 @@
 import streamlit as st
-import cv2
-import numpy as np
-from PIL import Image
 from color_extraction import extract_dominant_color
 from body_type import detect_body_type
 from recommendations import get_recommendations
+import os
 
-# Streamlit user interface for inputs
-st.title("Fashion AI - Image Upload & Recommendations")
+# Folder to store uploaded images
+UPLOAD_FOLDER = "app/static/input_images"
 
-# User Input
-st.header("Please fill in the following details:")
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
-occasion = st.selectbox("Choose the occasion:", ["Casual", "Formal", "Party", "Work", "Date"])
-color_preference = st.color_picker("Pick your favorite color for clothes", "#000000")
+# Streamlit UI
+st.title("Fashion AI - Personalized Outfit Recommendations")
 
-# Upload Image
-uploaded_file = st.file_uploader("Upload an image of yourself", type=["jpg", "png"])
+# Occasion selection
+occasion = st.selectbox(
+    "Choose an occasion:",
+    ["Casual", "Formal", "Party", "Wedding", "Sports"]
+)
 
-if uploaded_file is not None:
-    # Convert the uploaded image to a format OpenCV can work with
-    pil_image = Image.open(uploaded_file)
-    image = np.array(pil_image)
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    
-    # Save the image for further processing
-    image_path = "static/input_images/user_image.jpg"
-    cv2.imwrite(image_path, image)
+# File upload
+uploaded_file = st.file_uploader("Upload an image of yourself:", type=["jpg", "png"])
 
-    # 1. Color Extraction
-    dominant_color = extract_dominant_color(image)
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+if uploaded_file:
+    # Save uploaded file
+    file_path = os.path.join(UPLOAD_FOLDER, uploaded_file.name)
+    with open(file_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
 
-    # 2. Body Type Detection
-    try:
-        body_type = detect_body_type(image_path)
-        st.write(f"Detected Body Type: {body_type}")
-    except Exception as e:
-        st.write(f"Error detecting body type: {str(e)}")
+    st.image(file_path, caption="Uploaded Image", use_column_width=True)
 
-    # 3. Get Recommendations
-    recommendations = get_recommendations(occasion, color_preference, body_type, dominant_color)
-    st.write(f"Recommended Clothes for You: {recommendations}")
+    # Step 1: Extract dominant color
+    dominant_color = extract_dominant_color(file_path)
+    st.write(f"Dominant color detected: {dominant_color}")
+
+    # Step 2: Detect body type
+    body_type = detect_body_type(file_path)
+    st.write(f"Detected body type: {body_type}")
+
+    # Step 3: Generate recommendations
+    recommendations = get_recommendations(occasion, dominant_color, body_type)
+    st.write("Recommendations for you:")
+    for recommendation in recommendations:
+        st.write(f"- {recommendation}")
 
 else:
-    st.write("Please upload an image of yourself to proceed.")
+    st.write("Please upload an image to get started!")

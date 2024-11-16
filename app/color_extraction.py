@@ -1,20 +1,19 @@
-import cv2
-import numpy as np
+from PIL import Image
 from sklearn.cluster import KMeans
+import numpy as np
 
-def extract_dominant_color(image):
-    # Convert image to RGB and resize for faster processing
-    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image_rgb = cv2.resize(image_rgb, (image_rgb.shape[1] // 5, image_rgb.shape[0] // 5))
-    
-    # Reshape the image into a 2D array of pixels
-    pixels = image_rgb.reshape(-1, 3)
-    
-    # Use KMeans clustering to find the dominant color
-    kmeans = KMeans(n_clusters=1)
-    kmeans.fit(pixels)
-    
-    # Get the dominant color (RGB)
+def extract_dominant_color(image_path):
+    # Open the image
+    image = Image.open(image_path)
+    image = image.resize((100, 100))  # Reduce size for faster processing
+    image_np = np.array(image)
+
+    # Reshape image data to (number of pixels, 3)
+    pixels = image_np.reshape(-1, 3)
+
+    # KMeans clustering to find dominant color
+    kmeans = KMeans(n_clusters=1, random_state=0).fit(pixels)
     dominant_color = kmeans.cluster_centers_[0]
-    
-    return tuple(int(c) for c in dominant_color)
+
+    # Convert to integer RGB values
+    return tuple(map(int, dominant_color))

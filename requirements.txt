@@ -1,6 +1,6 @@
 streamlit
-opencv-python-headless==4.5.5.64
-pillow==8.3.2
+opencv-python-headless
+pillow
+mediapipe
+scikit-learn
 numpy
-scikit-learn==0.24.2
-mediapipe==0.8.10
